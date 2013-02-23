@@ -1,0 +1,3 @@
+platform :osx
+
+podspec :path => "../MIHSliderView.podspec"
