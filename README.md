@@ -21,7 +21,7 @@ NSImageView *imageView2 = [[[NSImageView alloc] init] autorelease];
 How To Get Started
 ------------------
 
-You either can drag & drop the `MIHSliderView.h` and `MIHSliderView.m` into your project or use CocoaPods to add the dependency. If you choose the drag & drop solution you have to link your application against the [QuartCore.framework](http://developer.apple.com/library/mac/#documentation/graphicsimaging/reference/QuartzCoreRefCollection/_index.html "Quartz Code Framework Reference").
+You either can drag & drop the `MIHSliderView.h` and `MIHSliderView.m` into your project or use CocoaPods to add the dependency. If you choose the drag & drop solution you have to link your application against the [QuartzCore.framework](http://developer.apple.com/library/mac/#documentation/graphicsimaging/reference/QuartzCoreRefCollection/_index.html "Quartz Code Framework Reference").
 
 For details on how to use the MIHSliderView have a look at the interface deceleration and read the comments.
 
@@ -32,4 +32,4 @@ What It Can Look In Production Use
 
 *Attention: The following image is from closed source project which uses the MIHSliderView component and the images  the source code of this project are not contained by the MIHSliderView project and license!*
 
-![MIHSliderView Sample Usage](https://github.com/hohl/MIHSliderView/raw/Project/SampleUsage.png)
+![MIHSliderView Sample Usage](https://raw.github.com/hohl/MIHSliderView/master/Project/SampleUsage.png)
