@@ -21,6 +21,7 @@
 // THE SOFTWARE.
 
 #import <Cocoa/Cocoa.h>
+#import <Quartz/Quartz.h>
 
 /**
  `MIHSliderView` is a Core Animation based slider view to display a couple of views each after another. 
