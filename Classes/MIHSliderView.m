@@ -317,8 +317,7 @@ const CGFloat kDotContainerY = 8.0;
         [dotView release];
     }
     
-    self.frame = NSMakeRect((self.sliderView.bounds.size.width - (dotsCount * kSpaceBetweenDotCenters + kDotImageSize)) / 2, kDotContainerY,
-                            dotsCount * kSpaceBetweenDotCenters + kDotImageSize, kDotImageSize);
+    self.frame = NSMakeRect((self.sliderView.bounds.size.width - (dotsCount * kSpaceBetweenDotCenters + kDotImageSize) + kSpaceBetweenDotCenters) / 2, kDotContainerY, dotsCount * kSpaceBetweenDotCenters + kDotImageSize, kDotImageSize);
 }
 
 - (void)setIndexOfHighlightedDot:(NSUInteger)indexOfHighlightedDot
