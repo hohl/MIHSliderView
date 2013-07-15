@@ -30,6 +30,8 @@ const NSTimeInterval kDefaultTransitionAnimationDuration = 0.6;
 @property (retain) NSView *displayedSlide;
 @property (retain) NSTimer *transitionTimer;
 @property (retain) NSView *contentView;
+@property (assign) CGFloat scrollDeltaX;
+@property (assign) CGFloat scrollDeltaY;
 - (void)_prepareView;
 - (void)_prepareTransitionTimer;
 - (void)_prepareTransitionToIndex:(NSUInteger)index;
@@ -46,16 +48,6 @@ const NSTimeInterval kDefaultTransitionAnimationDuration = 0.6;
 @implementation MIHSliderView {
     NSMutableArray *_slides;
     NSTimeInterval _scheduledTransitionInterval;
-}
-
-- (void)dealloc
-{
-    [_contentView release];
-    [_dotsControl release];
-    [_slides release];
-    [_displayedSlide release];
-    [_transitionTimer release];
-    [super dealloc];
 }
 
 - (id)init
@@ -148,7 +140,7 @@ const NSTimeInterval kDefaultTransitionAnimationDuration = 0.6;
     if (slideToDisplay == self.displayedSlide) return;
     slideToDisplay.frame = self.bounds;
     [slideToDisplay setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-    
+
     if (self.displayedSlide == nil) {
         [self.contentView addSubview:slideToDisplay];
         self.displayedSlide = slideToDisplay;
@@ -193,11 +185,39 @@ const NSTimeInterval kDefaultTransitionAnimationDuration = 0.6;
     return _scheduledTransitionInterval;
 }
 
+- (void)scrollWheel:(NSEvent *)theEvent {
+    if (theEvent.phase == NSEventPhaseBegan) {
+        self.scrollDeltaX = 0;
+        self.scrollDeltaY = 0;
+    } else if (theEvent.phase == NSEventPhaseChanged) {
+        self.scrollDeltaX += theEvent.scrollingDeltaX;
+        self.scrollDeltaY += theEvent.scrollingDeltaY;
+    } else if (theEvent.phase == NSEventPhaseEnded) {
+        if (self.scrollDeltaX > 50) {
+            self.transitionStyle = MIHSliderTransitionPushHorizontalFromLeft;
+            [self displaySlideAtIndex:(self.indexOfDisplayedSlide - 1) % self.slides.count];
+            if (self.scheduledTransition) {
+                [self _prepareTransitionTimer];
+            }
+        } else if (self.scrollDeltaX < - 50) {
+            self.transitionStyle = MIHSliderTransitionPushHorizontalFromRight;
+            [self displaySlideAtIndex:(self.indexOfDisplayedSlide + 1) % self.slides.count];
+            if (self.scheduledTransition) {
+                [self _prepareTransitionTimer];
+            }
+        }
+    } else if (theEvent.phase == NSEventPhaseCancelled) {
+        self.scrollDeltaX = 0;
+        self.scrollDeltaY = 0;
+    }
+}
+
 #pragma mark -
 
 - (void)_prepareView
 {
-    self.contentView = [[[NSView alloc] initWithFrame:self.bounds] autorelease];
+    [self setAcceptsTouchEvents:YES];
+    self.contentView = [[NSView alloc] initWithFrame:self.bounds];
     self.contentView.wantsLayer = YES;
     [self addSubview:self.contentView];
     _dotsControl = [[MIHSliderDotsControl alloc] init];
@@ -222,13 +242,17 @@ const NSTimeInterval kDefaultTransitionAnimationDuration = 0.6;
         [self _prepareTransitionTimer]; // <- this will restart the timer
     }
     if (dotView.tag >= 0 && dotView.tag < self.slides.count) {
+        NSLog(@"dotView, %ld crrut View:%ld", dotView.tag, self.dotsControl.indexOfHighlightedDot);
+
+        self.transitionStyle = dotView.tag > self.dotsControl.indexOfHighlightedDot ? MIHSliderTransitionPushHorizontalFromRight: MIHSliderTransitionPushHorizontalFromLeft;
+
         [self displaySlideAtIndex:dotView.tag];
     }
 }
 
 - (void)_prepareTransitionToIndex:(NSUInteger)aIndex
 {
-    const CFTimeInterval duration = self.transitionAnimationDuration * ([self.window currentEvent].modifierFlags & NSShiftKeyMask) ? 4.0 : 1.0;
+    const CFTimeInterval duration = self.transitionAnimationDuration * ([self.window currentEvent].modifierFlags & NSShiftKeyMask) ? 1.5 : 0.3;
     CATransition *transition = [CATransition animation];
     [transition setDuration:duration];
     [transition setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut]];
@@ -237,12 +261,16 @@ const NSTimeInterval kDefaultTransitionAnimationDuration = 0.6;
             [transition setType:kCATransitionFade];
             break;
             
-        case MIHSliderTransitionPushHorizontal:
-            [transition setType:kCATransitionMoveIn];
+        case MIHSliderTransitionPushHorizontalFromLeft:
+            [transition setType:kCATransitionPush];
             //[transition setSubtype:(self.indexOfDisplayedSlide < aIndex ? kCATransitionFromRight : kCATransitionFromLeft)];
             [transition setSubtype:kCATransitionFromLeft];
             break;
-            
+        case MIHSliderTransitionPushHorizontalFromRight:
+            [transition setType:kCATransitionPush];
+            //[transition setSubtype:(self.indexOfDisplayedSlide < aIndex ? kCATransitionFromRight : kCATransitionFromLeft)];
+            [transition setSubtype:kCATransitionFromRight];
+            break;
         case MIHSliderTransitionPushVertical:
             [transition setType:kCATransitionMoveIn];
             //[transition setSubtype:(self.indexOfDisplayedSlide < aIndex ? kCATransitionFromTop : kCATransitionFromBottom)];
@@ -274,8 +302,8 @@ const CGFloat kDotContainerY = 8.0;
 {
     self = [super initWithCoder:aDecoder];
     if (self) {
-        _normalDotImage = [[aDecoder decodeObjectForKey:@"_normalDotImage"] retain];
-        _highlightedDotImage = [[aDecoder decodeObjectForKey:@"_highlightedDotImage"] retain];
+        _normalDotImage = [aDecoder decodeObjectForKey:@"_normalDotImage"];
+        _highlightedDotImage = [aDecoder decodeObjectForKey:@"_highlightedDotImage"];
     }
     return self;
 }
@@ -285,13 +313,6 @@ const CGFloat kDotContainerY = 8.0;
     [aCoder encodeObject:_normalDotImage forKey:@"_normalDotImage"];
     [aCoder encodeObject:_highlightedDotImage forKey:@"_highlightedDotImage"];
     [super encodeWithCoder:aCoder];
-}
-
-- (void)dealloc
-{
-    [_normalDotImage release];
-    [_highlightedDotImage release];
-    [super dealloc];
 }
 
 - (void)setDotsCount:(NSUInteger)dotsCount
@@ -314,7 +335,6 @@ const CGFloat kDotContainerY = 8.0;
         [dotView setAction:@selector(_dotViewSelected:)];
         
         [self addSubview:dotView];
-        [dotView release];
     }
     
     self.frame = NSMakeRect((self.sliderView.bounds.size.width - (dotsCount * kSpaceBetweenDotCenters + kDotImageSize) + kSpaceBetweenDotCenters) / 2, kDotContainerY, dotsCount * kSpaceBetweenDotCenters + kDotImageSize, kDotImageSize);
