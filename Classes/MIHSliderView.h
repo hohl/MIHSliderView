@@ -34,7 +34,8 @@
 typedef enum {
     MIHSliderTransitionFade,
     MIHSliderTransitionPushVertical,
-    MIHSliderTransitionPushHorizontal
+    MIHSliderTransitionPushHorizontalFromLeft,
+    MIHSliderTransitionPushHorizontalFromRight
 } MIHSliderTransition;
 
 @class MIHSliderDotsControl;
